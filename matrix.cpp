@@ -1,5 +1,6 @@
 #include <iostream>
 #include <windows.h>
+#include <chrono>
 #include <queue>
 #include <map>
 using namespace std;
@@ -13,6 +14,16 @@ queue<map<string, int>> q2;
 queue<map<string, int>> q3;
 int** matr1;
 int** matr2;
+
+void f(int** arr, int n, int m) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            for(int k = 0; k < m; k++) {
+                arr[i][j] += matr1[i][k] * matr2[k][j];
+            }
+        }
+    }
+}
 
 DWORD WINAPI f1(LPVOID a123) {
     int** arr = (int**)a123;
@@ -154,6 +165,10 @@ DWORD WINAPI f3(LPVOID a123) {
 }
 
 int main() {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    freopen("input.txt", "r", stdin);
+
     InitializeCriticalSection(&critMatrRes);
 
     InitializeCriticalSection(&critQ1);
@@ -242,12 +257,36 @@ int main() {
         n1 += size1[i];
     }
     int** res = new int* [n];
-    for (int i = 0; i < n; i++) res[i] = new int[n];
+
+    for (int i = 0; i < n; i++) {
+        res[i] = new int[n];
+        for (int j = 0; j < n; j++) {
+            res[i][j] = 0;
+        }
+    }
+    auto start = std::chrono::steady_clock::now();
+    f(res, n, m);
+    auto end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    cout << "\n" << duration.count() << " ms";
+
+    cout << "\nf\n";
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << res[i][j] << " ";
+        }
+        cout << "\n";
+    }
+
     HANDLE* arrH = new HANDLE[k];
+    start = std::chrono::steady_clock::now();
     for (int i = 0; i < k; i++) {
         arrH[i] = CreateThread(NULL, 0, f1, static_cast<void*>(res), 0, NULL);
     }
     WaitForMultipleObjects(k, arrH, true, INFINITE);
+    end = std::chrono::steady_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    cout << "\n" << duration.count() << " ms";
     cout << "\nf1\n";
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -261,10 +300,14 @@ int main() {
             res[i][j] = 0;
         }
     }
+    start = std::chrono::steady_clock::now();
     for (int i = 0; i < k; i++) {
         arrH[i] = CreateThread(NULL, 0, f2, static_cast<void*>(res), 0, NULL);
     }
     WaitForMultipleObjects(k, arrH, true, INFINITE);
+    end = std::chrono::steady_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    cout << "\n" << duration.count() << " ms";
     cout << "\nf2\n";
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -279,10 +322,14 @@ int main() {
         }
     }
 
+    start = std::chrono::steady_clock::now();
     for (int i = 0; i < k; i++) {
         arrH[i] = CreateThread(NULL, 0, f3, static_cast<void*>(res), 0, NULL);
     }
     WaitForMultipleObjects(k, arrH, true, INFINITE);
+    end = std::chrono::steady_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    cout << "\n" << duration.count() << " ms";
     cout << "\nf3\n";
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
